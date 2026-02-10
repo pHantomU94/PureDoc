@@ -1,0 +1,119 @@
+name: Build PureDoc macOS DMG
+
+# 触发规则：推送到 v* 标签时触发 (如 v1.0.0)
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    
+    steps:
+      # 1. 拉取代码
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. 准备 Python 环境
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10" 
+          cache: 'pip'
+
+      # 3. 安装系统级工具
+      - name: Install System Tools
+        run: |
+          brew install create-dmg
+          # 安装 wget 用于下载 pandoc
+          brew install wget 
+
+      # 4. 安装 Python 依赖
+      - name: Install Python Dependencies
+        run: |
+          # 确保 requirements.txt 里有 flet, pypandoc, markdown-it-py, python-docx
+          pip install -r requirements.txt
+
+      # 5. [关键] 自动生成 icon.icns (用于 DMG 卷标图标)
+      # 直接利用 icon.png 生成，无需本地上传 icns
+      - name: Generate ICNS from PNG
+        run: |
+          mkdir pure_icon.iconset
+          sips -z 16 16     assets/icon.png --out pure_icon.iconset/icon_16x16.png
+          sips -z 32 32     assets/icon.png --out pure_icon.iconset/icon_16x16@2x.png
+          sips -z 32 32     assets/icon.png --out pure_icon.iconset/icon_32x32.png
+          sips -z 64 64     assets/icon.png --out pure_icon.iconset/icon_32x32@2x.png
+          sips -z 128 128   assets/icon.png --out pure_icon.iconset/icon_128x128.png
+          sips -z 256 256   assets/icon.png --out pure_icon.iconset/icon_128x128@2x.png
+          sips -z 256 256   assets/icon.png --out pure_icon.iconset/icon_256x256.png
+          sips -z 512 512   assets/icon.png --out pure_icon.iconset/icon_256x256@2x.png
+          sips -z 512 512   assets/icon.png --out pure_icon.iconset/icon_512x512.png
+          
+          # 生成 icns 文件到 assets/icon.icns
+          iconutil -c icns pure_icon.iconset -o assets/icon.icns
+          rm -rf pure_icon.iconset
+          echo "✅ icon.icns generated successfully!"
+
+      # 6. [关键] 下载并植入 Pandoc 二进制文件
+      # 这样 App 内部就自带 Pandoc，用户无需安装
+      - name: Embed Pandoc Binary
+        run: |
+          # 创建存放目录
+          mkdir -p assets/bin
+          
+          # 下载 Pandoc (macOS x86_64 版本，兼容性好，M1/M2 也能跑)
+          wget https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-x86_64-macOS.zip -O pandoc.zip
+          
+          # 解压并提取二进制文件
+          unzip pandoc.zip
+          mv pandoc-3.1.11.1-x86_64-macOS/bin/pandoc assets/bin/pandoc
+          
+          # 赋予执行权限
+          chmod +x assets/bin/pandoc
+          
+          # 清理垃圾
+          rm -rf pandoc.zip pandoc-3.1.11.1-x86_64-macOS
+          
+          echo "✅ Pandoc binary embedded into assets/bin/pandoc"
+
+      # 7. 执行 Flet Build
+      - name: Build Flet App
+        working-directory: ./
+        run: |
+          flet build macos \
+            --module-name main \
+            --description "Markdown to Word Converter" \
+            --copyright "Copyright (c) 2024 Jay" 
+
+      # 8. 制作 DMG 镜像
+      - name: Create DMG
+        run: |
+          # 准备输出目录
+          mkdir -p dist
+          mv build/macos/PureDoc.app dist/
+          
+          # 开始打包
+          create-dmg \
+            --volname "PureDoc Installer" \
+            --volicon "assets/icon.icns" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "PureDoc.app" 150 190 \
+            --hide-extension "PureDoc.app" \
+            --app-drop-link 450 185 \
+            "PureDoc-Installer.dmg" \
+            "dist/PureDoc.app"
+
+      # 9. 发布到 Release
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: PureDoc-Installer.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

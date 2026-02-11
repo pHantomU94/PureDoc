@@ -14,16 +14,6 @@ def get_resource_path(relative_path) -> str:
     
     return str(resource_path)
 
-def get_pandoc_path() -> str:
-    # 定位到 assets/bin/pandoc
-    path = get_resource_path("bin/pandoc")
-    
-    # 关键一步：确保打包后的二进制文件具有“可执行”权限
-    if os.path.exists(path):
-        current_stat = os.stat(path)
-        os.chmod(path, current_stat.st_mode | stat.S_IEXEC)
-        
-    return path
 
 # get download path
 def get_download_path() -> str:

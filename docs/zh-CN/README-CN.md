@@ -1,5 +1,15 @@
 # PureDoc
 
+<p align="center">
+  <img src="../images/icon.png" width="128" alt="PureDoc 图标">
+  <br>
+  <b>一款轻量级的 Markdown 转 Word 文档转换工具</b>
+  <br>
+  <a href="../../README.md">English Documentation</a> | <a href="./README-CN.md">简体中文说明文档</a>
+</p>
+
+---
+
 ## 工具简介
 
 **PureDoc** 是一款轻量级的 Markdown 转 Word 文档转换工具，专为处理由 LLM（如 ChatGPT、Claude）生成的内容而设计。它能够将 Markdown 格式的内容快速转换为排版整洁的 Word (.docx) 文档，并提供实时预览功能，让文档处理更加便捷高效。
@@ -19,8 +29,11 @@
 ## 当前支持功能
 
 ✅ **内容输入**：支持通过文件选择器导入 `.md` 或 `.markdown` 格式的文件，或直接将 Markdown 格式文本粘贴到编辑区域
+
 ✅ **Markdown 转 Word**：支持将 Markdown 内容转换为标准的 Word (.docx) 文档格式
-✅ **期望转换的word模板支持**：可选择自定义的 Word 模板文件（.docx），应用于输出文档，同时内置默认模板，开箱即用
+
+✅ **Word 模板支持**：可选择自定义的 Word 模板文件（.docx），应用于输出文档，同时内置默认模板，开箱即用
+
 ✅ **列表样式控制**
 - **Bullet Point 处理**：
   - 可选择忽略无序列表符号（•），使文本靠左对齐
@@ -31,72 +44,47 @@
   - **忽略序号**：移除所有数字序号
 
 ✅ **Mac 原生预览**：支持使用 macOS QuickLook 查看转换后的 Word 文档效果
+
 ✅ **Word 文件导出**：可选择保存路径和文件名，导出完成后自动打开文件
+
+---
+
+![PureDoc 预览](../images/layout.png)
 
 ---
 
 ## 工具安装方法 (macOS)
 
-### 方式一：从 Release 下载预编译版本
+### 方法一：从 Release 下载预编译版本
 
 1. **下载应用**
    - 从项目的 [Releases](https://github.com/yourusername/PureDoc/releases) 页面下载最新版本的 `.dmg` 文件
-   - 或下载已打包的 `PureDoc.app` 压缩包
 
 2. **安装到 Applications**
 
-   **方法 A：拖拽安装（推荐）**
+    安装 `.dmg` 到应用程序，启动应用前需要先绕过权限限制。
+
    ```bash
-   # 解压下载的文件
-   unzip PureDoc-0.1.0.zip
-   # 将 PureDoc.app 拖拽到 /Applications 文件夹
+   sudo xattr -cr /Applications/PureDoc.app
    ```
 
-   **方法 B：命令行安装**
+    如果仍有问题，可以尝试：
+
    ```bash
-   # 解压下载的文件
-   unzip PureDoc-0.1.0.zip
-   # 复制到 Applications 文件夹
-   cp -r PureDoc.app /Applications/
+   sudo find /Applications/PureDoc.app -type f -exec xattr -c {} +
    ```
 
-3. **避免权限限制**
-
-   如果遇到"无法打开，因为无法验证开发者"的提示，执行以下操作：
-
-   **方法 A：系统设置（推荐）**
-   1. 打开「系统设置」→「隐私与安全性」
-   2. 在"已阻止使用此应用"部分，找到 PureDoc
-   3. 点击"仍要打开"按钮
-   4. 输入管理员密码确认
-
-   **方法 B：命令行移除隔离属性**
-   ```bash
-   xattr -cr /Applications/PureDoc.app
-   ```
-   然后再次尝试打开应用。
-
-   **方法 C：首次打开允许**
-   1. 右键点击 PureDoc.app，选择"打开"
-   2. 在弹出对话框中点击"打开"
-   3. 首次成功打开后，之后可直接双击打开
+    然后尝试打开应用。
 
 ---
 
 ## 方法二：源码直接运行
+
 ### 前置依赖
-**必需依赖：Pandoc**
 
-Pandoc 是本工具的核心转换引擎，必须先安装：
+> 自`v0.2.0`起，PureDoc 不再依赖 `pandoc`。
 
-```bash
-# macOS 使用 Homebrew 安装
-brew install pandoc
-
-# 验证安装
-pandoc --version
-```
-### 运行方法
+只需安装必要的 Python 依赖包。
 
 ```bash
 pip3 install requirements.txt
@@ -104,21 +92,8 @@ flet run
 ```
 
 ---
+
 ## 方法三：源码编译方法
-
-### 前置依赖
-
-**必需依赖：Pandoc**
-
-Pandoc 是本工具的核心转换引擎，必须先安装：
-
-```bash
-# macOS 使用 Homebrew 安装
-brew install pandoc
-
-# 验证安装
-pandoc --version
-```
 
 ### 编译步骤
 
@@ -157,16 +132,17 @@ pandoc --version
 
 | 工具/库 | 版本要求 | 用途说明 |
 |---------|----------|----------|
-| **Pandoc** | 2.19+ | 文档转换的核心引擎，负责 Markdown 到 Word 的格式转换 |
 | **Python** | 3.10+ | 应用程序运行环境 |
 | **Flet** | 0.80.5+ | 跨平台 UI 框架，提供简洁的桌面应用界面 |
-| **PyPandoc** | 1.16.2+ | Pandoc 的 Python 封装库 |
+| **python-docx** | 1.2.0+ | Python 库，用于创建和操作 Word (.docx) 文档 |
+| **markdown-it-py** | 4.0.0+ | Markdown 解析器，支持 CommonMark 标准 |
 
 ### 开发依赖
 
 ```
 flet==0.80.5          # UI 框架
-pypandoc==1.16.2      # Pandoc Python 封装
+python-docx==1.2.0    # Word 文档操作
+markdown-it-py==4.0.0  # Markdown 解析
 toml==0.10.2          # 配置文件解析
 ```
 
@@ -174,17 +150,8 @@ toml==0.10.2          # 配置文件解析
 
 | 文件 | 说明 |
 |------|------|
-| `assets/scripts/bullet_process.lua` | Pandoc Lua 过滤器，处理列表格式和软回车 |
 | `assets/template/template.docx` | 默认 Word 模板 |
 | `assets/icon.png` | 应用图标 |
-
-### Lua 过滤器功能
-
-`bullet_process.lua` 脚本提供了以下处理能力：
-
-- **软回车处理**：将段落内的软换行符转换为独立的段落
-- **无序列表控制**：根据配置决定是否添加/移除 bullet 符号 (•)
-- **有序列表控制**：支持三种模式（纯文本、Word 列表、忽略序号）
 
 ---
 
@@ -193,7 +160,6 @@ toml==0.10.2          # 配置文件解析
 本项目采用 [MIT License](LICENSE) 许可协议。
 
 ---
-
 
 ## 反馈与贡献
 

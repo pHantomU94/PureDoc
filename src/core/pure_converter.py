@@ -1,6 +1,8 @@
 import os
+from typing import TYPE_CHECKING
 from docx import Document
 from markdown_it import MarkdownIt
+from docx.document import Document as DocumentObject
 
 class PureConverter:
     def __init__(self, template_path: str | None = None):
@@ -99,10 +101,12 @@ class PureConverter:
             doc = Document()
 
         tokens = self.md.parse(md_text)
+        # for token in tokens:
+        #     print(token, end='\n\n')
         self._render_tokens(doc, tokens, settings)
         doc.save(output_path)
 
-    def _render_tokens(self, doc, tokens, settings):
+    def _render_tokens(self, doc: DocumentObject, tokens, settings):
         """核心渲染逻辑"""
         ignore_bullets = settings.get("ignore_bullets", False)
         ordered_style = settings.get("ordered_list_style", "text")
@@ -150,18 +154,18 @@ class PureConverter:
                         elif curr == 'ordered':
                             if ordered_style == 'list':
                                 # 尝试使用 Word 原生样式
-                                p_style = 'List Number'
+                                p_style = 'List'
                             elif ordered_style == 'text':
                                 use_manual_number = True
                             # 'none' 什么都不做
 
                     # === 创建第一段 ===
+                    p = doc.add_paragraph()
+                    # try p_style
                     try:
-                        # 尝试应用样式 (解决问题2)
-                        p = doc.add_paragraph(style=p_style)
-                    except KeyError:
+                        p.style = p_style
+                    except (KeyError, ValueError):
                         # 如果模板里没有 'List Number'，回退到普通样式
-                        p = doc.add_paragraph()
                         # 并且强制开启手动数字模式
                         if ordered_style == 'list':
                             use_manual_number = True
@@ -171,7 +175,7 @@ class PureConverter:
                         if use_manual_number:
                             prefix = f"{ordered_counters[-1]}. "
                         ordered_counters[-1] += 1 # 计数增加
-
+                    
                     # 写入前缀
                     if prefix:
                         p.add_run(prefix)
@@ -184,9 +188,8 @@ class PureConverter:
             
             idx += 1
 
-    def _fill_rich_text(self, doc, paragraph, inline_token, style=None):
+    def _fill_rich_text(self, doc:DocumentObject, paragraph, inline_token, style=None):
         """
-        终极流式渲染 (修复版)：
         同时支持 softbreak 和 hardbreak，确保 breaks=True 时换行生效。
         """
         if not inline_token.children:
@@ -208,28 +211,30 @@ class PureConverter:
             elif child.type == 'em_close':
                 curr_italic = False
             
-            # 🟢 [核心修复] 同时捕获软回车(softbreak) 和 硬回车(hardbreak)
+            # process '\n' '\n\r'
             elif child.type == 'softbreak' or child.type == 'hardbreak':
-                # 遇到回车 -> 创建真正的 Word 新段落 (硬回车)
+                # start new paragraph
                 curr_p = doc.add_paragraph(style=style)
             
+            # process text content
             elif child.type == 'text' or child.type == 'code_inline':
-                # 处理文本内容 (有些文本内部可能还包含 \n)
+                # some contents also include '\n'
                 parts = child.content.split('\n')
                 for i, part in enumerate(parts):
                     if i > 0:
-                        # 文本内的 \n 也要分段
+                        # when meet '\n', start a new line
                         curr_p = doc.add_paragraph(style=style)
                     
                     if part:
                         run = curr_p.add_run(part)
-                        # 关键：新段落继承当前的状态
+                        # apply the font settings
                         run.bold = curr_bold
                         run.italic = curr_italic
+                        # process codes
                         if child.type == 'code_inline':
                             run.font.name = 'Courier New'
 
-    def _add_text_with_breaks(self, doc, paragraph, text, style=None):
+    def _add_text_with_breaks(self, doc:DocumentObject, paragraph, text, style=None):
         """处理无 children 的纯文本换行"""
         lines = text.split('\n')
         curr_p = paragraph

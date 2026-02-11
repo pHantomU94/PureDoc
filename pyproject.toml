@@ -1,5 +1,5 @@
 [project]
-name = "puredoc"
+name = "PureDoc"
 version = "0.1.0"
 description = ""
 readme = "README.md"
@@ -14,7 +14,7 @@ dev = [ "flet-cli>=0.80.5", "flet-desktop>=0.80.5", "flet-web>=0.80.5",]
 
 [tool.flet]
 org = "com.shengjie.horizon"
-product = "puredoc"
+product = "PureDoc"
 company = "Flet"
 copyright = "Copyright (C) 2023-2026 by Flet"
 

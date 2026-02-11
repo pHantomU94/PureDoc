@@ -9,7 +9,7 @@ from src.ui.theme import Theme
 from src.ui.toolbar import Toolbar
 from src.utils.file_picker import FilePickerHandler
 from src.utils import get_download_path, get_resource_path
-from src.core.converter import Converter
+from src.core.pure_converter import PureConverter
 from src.utils.platform import PlatformUtils
 
 import os
@@ -26,11 +26,14 @@ class MainPage:
         self.page = page
         
         # # Initialize converter
-        self.converter = Converter(
-            lua_filter_path=get_resource_path('scripts/bullet_process.lua'),
+        self.converter = PureConverter(
             template_path=get_resource_path('template/template.docx'),
-            ignore_bullets=True,
         )
+        # markdown converter settings
+        self.md_converter_settings = {
+            "ignore_bullets": True,
+            "ordered_list_style": "Text"
+        }
 
         # Temporary file for preview
         self._temp_preview_file = None
@@ -150,9 +153,6 @@ class MainPage:
         self._checkbox_preserve_num.value = True
         self._dropdown_style.value = "text"
 
-        # Update converter
-        self.converter.set_ignore_bullets(self._checkbox_ignore_bullets.value)
-
         # Update template display
         template_path = get_resource_path('template/template.docx')
         if template_path and Path(template_path).exists():
@@ -173,8 +173,7 @@ class MainPage:
             try:
                 processed_md = self.converter.convert_text(
                     raw_content,
-                    output_format='markdown',
-                    is_export=False,
+                    settings=self.md_converter_settings,
                 )
                 self.markdown_view.value = processed_md
             except Exception as e:
@@ -184,8 +183,8 @@ class MainPage:
     def _handle_settings_change(self, e: ft.ControlEvent | None = None) -> None:
         """Handle settings change"""
         # Update converter
-        self.converter.set_ignore_bullets(self.toolbar.ignore_bullets)
-        self.converter.set_ordered_list_style(self.toolbar.ordered_list_style)
+        self.md_converter_settings["ignore_bullets"] = self.toolbar.ignore_bullets
+        self.md_converter_settings["ordered_list_style"] = self.toolbar.ordered_list_style
 
         # Refresh preview
         self._handle_input_change(None)
@@ -285,6 +284,7 @@ class MainPage:
             self.converter.convert_to_word(
                 self.txt_input.value,
                 self._temp_preview_file,
+                self.md_converter_settings
             )
 
             # Open in QuickLook (macOS) or default viewer
@@ -319,6 +319,7 @@ class MainPage:
             self.converter.convert_to_word(
                 self.txt_input.value,
                 str(output_path),
+                self.md_converter_settings
             )
 
             # Open exported file

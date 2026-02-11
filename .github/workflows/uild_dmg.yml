@@ -29,17 +29,30 @@ jobs:
       - name: Install System Tools
         run: |
           brew install create-dmg
-          # 安装 wget 用于下载 pandoc
           brew install wget 
 
       # 4. 安装 Python 依赖
       - name: Install Python Dependencies
         run: |
-          # 确保 requirements.txt 里有 flet, pypandoc, markdown-it-py, python-docx
           pip install -r requirements.txt
 
-      # 5. [关键] 自动生成 icon.icns (用于 DMG 卷标图标)
-      # 直接利用 icon.png 生成，无需本地上传 icns
+      # 5. [功能] 设定动态文件名 (架构-系统-版本)
+      # 这一步计算出最终的文件名，存入环境变量 DMG_NAME
+      - name: Set Output Filename
+        id: filename
+        run: |
+          # 获取架构 (x86_64 或 arm64)
+          ARCH=$(uname -m)
+          # 获取版本号 (例如 v1.0.0)
+          VERSION=${{ github.ref_name }}
+          # 拼接文件名
+          NAME="PureDoc-Installer-${ARCH}-macos-${VERSION}.dmg"
+          
+          echo "Calculated DMG Name: $NAME"
+          # 写入环境变量，供后续步骤使用
+          echo "DMG_NAME=$NAME" >> $GITHUB_ENV
+
+      # 6. [关键] 自动生成 icon.icns (用于 DMG 卷标图标)
       - name: Generate ICNS from PNG
         run: |
           mkdir pure_icon.iconset
@@ -58,29 +71,18 @@ jobs:
           rm -rf pure_icon.iconset
           echo "✅ icon.icns generated successfully!"
 
-      # 6. [关键] 下载并植入 Pandoc 二进制文件
-      # 这样 App 内部就自带 Pandoc，用户无需安装
+      # 7. [关键] 下载并植入 Pandoc 二进制文件
       - name: Embed Pandoc Binary
         run: |
-          # 创建存放目录
           mkdir -p assets/bin
-          
-          # 下载 Pandoc (macOS x86_64 版本，兼容性好，M1/M2 也能跑)
           wget https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-x86_64-macOS.zip -O pandoc.zip
-          
-          # 解压并提取二进制文件
           unzip pandoc.zip
           mv pandoc-*/bin/pandoc assets/bin/pandoc
-          
-          # 赋予执行权限
           chmod +x assets/bin/pandoc
-          
-          # 清理垃圾
           rm -rf pandoc.zip pandoc-*
-          
           echo "✅ Pandoc binary embedded into assets/bin/pandoc"
 
-      # 7. 执行 Flet Build
+      # 8. 执行 Flet Build
       - name: Build Flet App
         working-directory: ./
         run: |
@@ -90,14 +92,24 @@ jobs:
             --description "Markdown to Word Converter" \
             --copyright "Copyright (c) 2024 Jay" 
 
-      # 8. 制作 DMG 镜像
+      # 9. 清理无效软链接 (修复 xattr 报错)
+      - name: Cleanup Broken Symlinks
+        run: |
+            echo "🔍 Scanning for broken symlinks in App Bundle..."
+            find build/macos/PureDoc.app -type l ! -exec test -e {} \; -print -delete
+            echo "✅ Cleanup complete."
+
+      # 10. 制作 DMG 镜像 (使用动态文件名)
       - name: Create DMG
         run: |
           # 准备输出目录
           mkdir -p dist
           mv build/macos/PureDoc.app dist/
           
-          # 开始打包
+          # 确保图标存在
+          ls -l assets/icon.icns
+          
+          # 使用环境变量中定义的文件名
           create-dmg \
             --volname "PureDoc Installer" \
             --volicon "assets/icon.icns" \
@@ -107,14 +119,14 @@ jobs:
             --icon "PureDoc.app" 150 190 \
             --hide-extension "PureDoc.app" \
             --app-drop-link 450 185 \
-            "PureDoc-Installer.dmg" \
+            "${{ env.DMG_NAME }}" \
             "dist/PureDoc.app"
 
-      # 9. 发布到 Release
+      # 11. 发布到 Release
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: PureDoc-Installer.dmg
+          files: ${{ env.DMG_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

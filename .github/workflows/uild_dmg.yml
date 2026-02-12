@@ -25,34 +25,28 @@ jobs:
           python-version: "3.10" 
           cache: 'pip'
 
-      # 3. 安装系统级工具
+      # 3. 安装系统级工具 (移除了 wget，不再需要)
       - name: Install System Tools
         run: |
           brew install create-dmg
-          brew install wget 
 
       # 4. 安装 Python 依赖
       - name: Install Python Dependencies
         run: |
           pip install -r requirements.txt
 
-      # 5. [功能] 设定动态文件名 (架构-系统-版本)
-      # 这一步计算出最终的文件名，存入环境变量 DMG_NAME
+      # 5. 设定动态文件名 (架构-系统-版本)
       - name: Set Output Filename
         id: filename
         run: |
-          # 获取架构 (x86_64 或 arm64)
           ARCH=$(uname -m)
-          # 获取版本号 (例如 v1.0.0)
           VERSION=${{ github.ref_name }}
-          # 拼接文件名
           NAME="PureDoc-Installer-${ARCH}-macos-${VERSION}.dmg"
           
           echo "Calculated DMG Name: $NAME"
-          # 写入环境变量，供后续步骤使用
           echo "DMG_NAME=$NAME" >> $GITHUB_ENV
 
-      # 6. [关键] 自动生成 icon.icns (用于 DMG 卷标图标)
+      # 6. 自动生成 icon.icns (用于 DMG 卷标图标)
       - name: Generate ICNS from PNG
         run: |
           mkdir pure_icon.iconset
@@ -66,23 +60,12 @@ jobs:
           sips -z 512 512   assets/icon.png --out pure_icon.iconset/icon_256x256@2x.png
           sips -z 512 512   assets/icon.png --out pure_icon.iconset/icon_512x512.png
           
-          # 生成 icns 文件到 assets/icon.icns
           iconutil -c icns pure_icon.iconset -o assets/icon.icns
           rm -rf pure_icon.iconset
           echo "✅ icon.icns generated successfully!"
 
-      # 7. [关键] 下载并植入 Pandoc 二进制文件
-      - name: Embed Pandoc Binary
-        run: |
-          mkdir -p assets/bin
-          wget https://github.com/jgm/pandoc/releases/download/3.1.11.1/pandoc-3.1.11.1-x86_64-macOS.zip -O pandoc.zip
-          unzip pandoc.zip
-          mv pandoc-*/bin/pandoc assets/bin/pandoc
-          chmod +x assets/bin/pandoc
-          rm -rf pandoc.zip pandoc-*
-          echo "✅ Pandoc binary embedded into assets/bin/pandoc"
-
-      # 8. 执行 Flet Build
+      # 7. 执行 Flet Build
+      # 注意：这里增加了 include-packages 确保新依赖被打包
       - name: Build Flet App
         working-directory: ./
         run: |
@@ -90,9 +73,9 @@ jobs:
             --yes \
             --module-name main \
             --description "Markdown to Word Converter" \
-            --copyright "Copyright (c) 2024 Jay" 
+            --copyright "Copyright (c) 2024 Jay" \
 
-      # 9. 清理无效软链接 (修复 xattr 报错)
+      # 8. 清理无效软链接 (修复 xattr 报错)
       - name: Cleanup Broken Symlinks
         run: |
             echo "🔍 Scanning for broken symlinks in App Bundle..."
@@ -100,10 +83,9 @@ jobs:
             APP_PATH="build/macos/PureDoc.app"
             
             if [ -d "$APP_PATH" ]; then
-                # 通用清理：查找所有指向不存在目标的软链接并删除
+                # 删除死链
                 find "$APP_PATH" -type l ! -exec test -e {} \; -print -delete
-                
-                # 2. [新增] 针对性清理：强制删除 .pod 文件 (这是 Flet/Serious Python 的已知残留)
+                # 删除 .pod 残留
                 find "$APP_PATH" -name ".pod" -delete
                 
                 echo "✅ Cleanup complete."
@@ -112,17 +94,12 @@ jobs:
                 exit 1
             fi
 
-      # 10. 制作 DMG 镜像 (使用动态文件名)
+      # 9. 制作 DMG 镜像
       - name: Create DMG
         run: |
-          # 准备输出目录
           mkdir -p dist
           mv build/macos/PureDoc.app dist/
           
-          # 确保图标存在
-          ls -l assets/icon.icns
-          
-          # 使用环境变量中定义的文件名
           create-dmg \
             --volname "PureDoc Installer" \
             --volicon "assets/icon.icns" \
@@ -135,7 +112,7 @@ jobs:
             "${{ env.DMG_NAME }}" \
             "dist/PureDoc.app"
 
-      # 11. 发布到 Release
+      # 10. 发布到 Release
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')

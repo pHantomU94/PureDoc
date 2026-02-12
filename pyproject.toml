@@ -1,10 +1,10 @@
 [project]
 name = "PureDoc"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [ "flet>=0.80.5", "pypandoc==1.16.2",]
+dependencies = [ "flet>=0.80.5", "python-docx==1.2.0", "markdown-it-py==4.0.0",]
 [[project.authors]]
 name = "Jay & J"
 email = "shengjie.horizon@gmail.com"

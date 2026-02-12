@@ -11,7 +11,6 @@ from src.ui.main_page import MainPage
 from src import __version__
 
 def main(page: ft.Page):
-    # init_pandoc()
     """Main application entry point"""
     page.title = "PureDoc - Markdown to Word - (v" + __version__ + ")"  
     # page.padding = 20

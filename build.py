@@ -56,7 +56,6 @@ def check_assets():
 
 
     warnings = []
-    pandoc_found = False
 
 
     # 检查 Template

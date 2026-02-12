@@ -63,8 +63,14 @@
     Install the `.dmg` to your application, and before launching the application, we need to bypass permission restrictions first.
 
    ```bash
-   xattr -cr /Applications/PureDoc.app
+   sudo xattr -cr /Applications/PureDoc.app
    ```
+
+    If there is anything wrong, you can try like this
+    
+    ```bash
+    sudo find /Applications/PureDoc.app -type f -exec xattr -c {} +
+    ```
 
    Then try opening the application.
 

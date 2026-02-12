@@ -96,8 +96,21 @@ jobs:
       - name: Cleanup Broken Symlinks
         run: |
             echo "🔍 Scanning for broken symlinks in App Bundle..."
-            find build/macos/PureDoc.app -type l ! -exec test -e {} \; -print -delete
-            echo "✅ Cleanup complete."
+            
+            APP_PATH="build/macos/PureDoc.app"
+            
+            if [ -d "$APP_PATH" ]; then
+                # 通用清理：查找所有指向不存在目标的软链接并删除
+                find "$APP_PATH" -type l ! -exec test -e {} \; -print -delete
+                
+                # 2. [新增] 针对性清理：强制删除 .pod 文件 (这是 Flet/Serious Python 的已知残留)
+                find "$APP_PATH" -name ".pod" -delete
+                
+                echo "✅ Cleanup complete."
+            else
+                echo "❌ Error: App path not found at $APP_PATH"
+                exit 1
+            fi
 
       # 10. 制作 DMG 镜像 (使用动态文件名)
       - name: Create DMG

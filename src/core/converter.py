@@ -3,8 +3,8 @@
 import os
 import subprocess
 from typing import Callable
-from pathlib import Path
 import pypandoc
+from src.utils.get_path import get_pandoc_path
 
 
 class ConversionError(Exception):
@@ -34,6 +34,9 @@ class Converter:
         self.template_path = template_path
         self.ignore_bullets = ignore_bullets
         self.ordered_list_style = "text"
+
+        self.internal_pandoc = get_pandoc_path()
+        os.environ["PYPANDOC_PANDOC"] = self.internal_pandoc
 
     def get_pandoc_args(self, is_export: bool = False) -> list[str]:
         """Generate Pandoc arguments
@@ -126,7 +129,7 @@ class Converter:
             if self.template_path and not os.path.exists(self.template_path):
                 try:
                     subprocess.run(
-                        ['pandoc', '-o', str(self.template_path),
+                        [self.internal_pandoc, '-o', str(self.template_path),
                          '--print-default-data-file', 'reference.docx'],
                         check=True,
                         capture_output=True
@@ -179,7 +182,7 @@ class Converter:
             if self.template_path and not os.path.exists(self.template_path):
                 try:
                     subprocess.run(
-                        ['pandoc', '-o', str(self.template_path),
+                        [self.internal_pandoc, '-o', str(self.template_path),
                          '--print-default-data-file', 'reference.docx'],
                         check=True,
                         capture_output=True

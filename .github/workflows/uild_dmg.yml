@@ -70,13 +70,13 @@ jobs:
           
           # 解压并提取二进制文件
           unzip pandoc.zip
-          mv pandoc-3.1.11.1-x86_64-macOS/bin/pandoc assets/bin/pandoc
+          mv pandoc-*/bin/pandoc assets/bin/pandoc
           
           # 赋予执行权限
           chmod +x assets/bin/pandoc
           
           # 清理垃圾
-          rm -rf pandoc.zip pandoc-3.1.11.1-x86_64-macOS
+          rm -rf pandoc.zip pandoc-*
           
           echo "✅ Pandoc binary embedded into assets/bin/pandoc"
 

@@ -1,0 +1,25 @@
+[project]
+name = "puredoc"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [ "flet>=0.80.5", "pypandoc==1.16.2",]
+[[project.authors]]
+name = "Jay & J"
+email = "shengjie.horizon@gmail.com"
+
+[dependency-groups]
+dev = [ "flet-cli>=0.80.5", "flet-desktop>=0.80.5", "flet-web>=0.80.5",]
+
+[tool.flet]
+org = "com.shengjie.horizon"
+product = "puredoc"
+company = "Flet"
+copyright = "Copyright (C) 2023-2026 by Flet"
+
+[tool.flet.app]
+path = "."
+
+[tool.flet.macos]
+target_arch = [ "arm64",]

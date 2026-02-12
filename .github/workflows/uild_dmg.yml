@@ -85,6 +85,7 @@ jobs:
         working-directory: ./
         run: |
           flet build macos \
+            --yes \
             --module-name main \
             --description "Markdown to Word Converter" \
             --copyright "Copyright (c) 2024 Jay" 

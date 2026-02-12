@@ -28,8 +28,11 @@
 ## Current Features
 
 ✅ **Content Input**: Support importing `.md` or `.markdown` format files via file picker, or directly paste Markdown formatted text into the editor area
+
 ✅ **Markdown to Word**: Convert Markdown content to standard Word (.docx) document format
+
 ✅ **Word Template Support**: Select custom Word template files (.docx) to apply to output documents, with built-in default template ready to use
+
 ✅ **List Style Control**
 - **Bullet Point Handling**:
   - Option to ignore unordered list symbols (•) for left-aligned text
@@ -40,6 +43,7 @@
   - **Ignore Numbers**: Remove all numeric prefixes
   
 ✅ **Mac Native Preview**: Use macOS QuickLook to preview converted Word document
+
 ✅ **Word File Export**: Choose save path and filename, auto-open file after export completion
 
 
@@ -53,45 +57,16 @@
 
 1. **Download Application**
    - Download the latest `.dmg` file from the project's [Releases](https://github.com/yourusername/PureDoc/releases) page
-   - Or download the packaged `PureDoc.app` archive
 
 2. **Install to Applications**
 
-   **Method A: Drag & Drop Installation (Recommended)**
-   ```bash
-   # Extract downloaded file
-   unzip PureDoc-0.1.0.zip
-   # Drag PureDoc.app to /Applications folder
-   ```
+    Install the `.dmg` to your application, and before launching the application, we need to bypass permission restrictions first.
 
-   **Method B: Command Line Installation**
-   ```bash
-   # Extract downloaded file
-   unzip PureDoc-0.1.0.zip
-   # Copy to Applications folder
-   cp -r PureDoc.app /Applications/
-   ```
-
-3. **Bypass Permission Restrictions**
-
-   If you encounter "cannot be opened because it cannot be verified by developer" message, perform the following:
-
-   **Method A: System Settings (Recommended)**
-   1. Open "System Settings" → "Privacy & Security"
-   2. Find PureDoc in the "App was blocked from opening" section
-   3. Click "Open Anyway" button
-   4. Enter administrator password to confirm
-
-   **Method B: Command Line Remove Quarantine Attribute**
    ```bash
    xattr -cr /Applications/PureDoc.app
    ```
-   Then try opening the application again.
 
-   **Method C: First Launch Allow**
-   1. Right-click on PureDoc.app and select "Open"
-   2. Click "Open" in the pop-up dialog
-   3. After first successful launch, you can double-click to open it directly
+   Then try opening the application.
 
 ---
 

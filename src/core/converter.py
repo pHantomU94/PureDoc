@@ -33,6 +33,7 @@ class Converter:
         self.lua_filter_path = lua_filter_path
         self.template_path = template_path
         self.ignore_bullets = ignore_bullets
+        self.ordered_list_style = "text"
 
     def get_pandoc_args(self, is_export: bool = False) -> list[str]:
         """Generate Pandoc arguments
@@ -49,15 +50,20 @@ class Converter:
         if self.ignore_bullets:
             args.append("--metadata=ignore_bullets=true")
 
+        # Add ordered list style metadata
+        args.append(f"--metadata=ordered_list_style={self.ordered_list_style}")
+
         # Add template for export
         if is_export and self.template_path and os.path.exists(self.template_path):
             args.append(f'--reference-doc={self.template_path}')
 
         # Add Lua filter
+        print(self.lua_filter_path)
         if os.path.exists(self.lua_filter_path):
             args.append(f'--lua-filter={self.lua_filter_path}')
 
         args.append('--wrap=none')
+        print(args)
         return args
 
     def convert_text(
@@ -213,3 +219,14 @@ class Converter:
             ignore: True to ignore bullets, False to keep them
         """
         self.ignore_bullets = ignore
+
+    def set_ordered_list_style(self, style: str) -> None:
+        """Set ordered list style to guide lua scripts to process number list
+
+        Args:
+            style: three modes, "text", "list", "none"
+            "text" to convert number list to text '1./2./3.'
+            "list" to convert number list to doc number list style
+            "none" (or other contents) to ignore number list index
+        """
+        self.ordered_list_style=style

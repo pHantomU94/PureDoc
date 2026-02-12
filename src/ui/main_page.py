@@ -185,6 +185,7 @@ class MainPage:
         """Handle settings change"""
         # Update converter
         self.converter.set_ignore_bullets(self.toolbar.ignore_bullets)
+        self.converter.set_ordered_list_style(self.toolbar.ordered_list_style)
 
         # Refresh preview
         self._handle_input_change(None)

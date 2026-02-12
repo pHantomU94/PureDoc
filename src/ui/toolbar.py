@@ -176,6 +176,14 @@ class Toolbar:
         return self._checkbox_ignore_bullets.value or False
 
     @property
+    def ordered_list_style(self) -> str:
+        """Get ignore bullets setting"""
+        if self._checkbox_preserve_num.value:
+            if self._dropdown_style.value:
+                return self._dropdown_style.value
+        return "none"
+
+    @property
     def preserve_numbered_lists(self) -> bool:
         """Get preserve numbered lists setting"""
         return self._checkbox_preserve_num.value or False

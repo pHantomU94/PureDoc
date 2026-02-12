@@ -1,9 +1,7 @@
-import os
 import re
 import sys
 import toml
 import subprocess
-import shutil
 from pathlib import Path
 
 # 获取脚本所在目录（项目根目录）
@@ -48,87 +46,24 @@ def update_pyproject_toml(version):
         print("❌ 错误: pyproject.toml 中缺少 [project] 节点")
         sys.exit(1)
 
-def check_pandoc_in_system():
-    """在系统中查找 pandoc 可执行文件路径"""
-    # 尝试使用 which/where 查找 pandoc
-    if sys.platform == "win32":
-        cmd = ["where", "pandoc"]
-    else:
-        cmd = ["which", "pandoc"]
-
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        pandoc_path = result.stdout.strip()
-        if pandoc_path and Path(pandoc_path).exists():
-            return pandoc_path
-    except subprocess.CalledProcessError:
-        pass
-
-    return None
-
-
-def copy_pandoc_to_assets(pandoc_path):
-    """将 pandoc 复制到 assets 文件夹"""
-    assets_pandoc_dir = PROJECT_ROOT / "assets" / "bin" 
-    assets_pandoc_dir.mkdir(parents=True, exist_ok=True)
-
-    dest_path = assets_pandoc_dir / "pandoc"
-
-    try:
-        shutil.copy2(pandoc_path, dest_path)
-        # macOS/Linux 需要设置执行权限
-        if sys.platform != "win32":
-            os.chmod(dest_path, 0o755)
-        print(f"✅ 已将 pandoc 复制到 assets/bin/pandoc")
-        return True
-    except Exception as e:
-        print(f"❌ 复制 pandoc 失败: {e}")
-        return False
-
 
 def check_assets():
     """检查资源文件，处理缺失情况"""
     print("\n🔍 检查资源文件...")
 
     assets_dir = PROJECT_ROOT / "assets"
-    lua_script = assets_dir / "scripts" / "bullet_process.lua"
     template = assets_dir / "template" / "template.docx"
-    pandoc_dir = assets_dir / "bin" /"pandoc"
+
 
     warnings = []
     pandoc_found = False
 
-    # 检查 Lua 脚本
-    if not lua_script.exists():
-        warnings.append(f"⚠️  警告: 未找到 Lua 脚本: {lua_script}")
-    else:
-        print(f"✅ Lua 脚本存在: {lua_script}")
 
     # 检查 Template
     if not template.exists():
         warnings.append(f"⚠️  警告: 未找到模板文件: {template}")
     else:
         print(f"✅ 模板文件存在: {template}")
-
-    # 检查 Pandoc
-    if not pandoc_dir.exists():
-        print(f"⚠️  未找到 assets/pandoc 目录，尝试从系统查找 pandoc...")
-        system_pandoc = check_pandoc_in_system()
-        if system_pandoc:
-            if copy_pandoc_to_assets(system_pandoc):
-                pandoc_found = True
-            else:
-                print("❌ 错误: 无法复制 pandoc 到 assets 目录")
-                sys.exit(1)
-        else:
-            print("❌ 错误: 系统中未找到 pandoc")
-            print("💡 请先安装 pandoc:")
-            print("   macOS: brew install pandoc")
-            print("   Ubuntu/Debian: sudo apt install pandoc")
-            print("   Windows: 下载安装包 https://pandoc.org/installing.html")
-            sys.exit(1)
-    else:
-        print(f"✅ Pandoc 目录存在: {pandoc_dir}")
 
     # 打印警告
     if warnings:

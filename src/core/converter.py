@@ -4,8 +4,11 @@ import os
 import subprocess
 from typing import Callable
 import pypandoc
-from src.utils.get_path import get_pandoc_path
+from docx import Document
+from docx.shared import Pt
+from markdown_it import MarkdownIt
 
+from src.utils.get_path import get_pandoc_path
 
 class ConversionError(Exception):
     """Custom exception for conversion errors"""
